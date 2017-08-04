@@ -91,7 +91,7 @@ public class DiscordBot
 public class CommandModule : ModuleBase
 {
     [Command("register"), Summary("Register a Twitter account to the Discord account in use to enable screenshot mirroring.")]
-    public async Task Register([Summary("The @username to register as the Twitter account")] string username)
+    public async Task Register([Remainder, Summary("The @username to register as the Twitter account")] string username)
     {
         // TODO
         await ReplyAsync($"Hello {username}");
