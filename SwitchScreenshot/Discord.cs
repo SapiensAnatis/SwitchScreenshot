@@ -107,11 +107,11 @@ public class CommandModule : ModuleBase
         if (username.Length > 15) {
             await ReplyAsync("That's an invalid Twitter username; it's too long.");
             return;
-        } else if (username.All(c => char.IsLetterOrDigit(c) || c == '_')) { // Asserts that all characters in string are either alphanumeric or underscores.
+        } else if (!username.All(c => char.IsLetterOrDigit(c) || c == '_')) { // Asserts that all characters in string are either alphanumeric or underscores.
             await ReplyAsync("That's an invalid Twitter username; it contains disallowed characters.");
             return;
         }
-
+        
         await ReplyAsync($"Hello {username}");
     }
 }
