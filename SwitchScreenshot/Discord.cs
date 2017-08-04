@@ -57,7 +57,9 @@ public class DiscordBot
 
     private Task Log(LogMessage message)
     {
-        Console.WriteLine($"[Discord] ({message.Severity}) {message.Source}: {message.Message}");
+        string TimeString = TimeZoneInfo.ConvertTime(DateTime.Now, TimeZoneInfo.Local)
+            .ToString("HH:mm:ss");
+        Console.WriteLine($"[Discord | {TimeString}] ({message.Severity}) {message.Source}: {message.Message}");
         return Task.CompletedTask;
     }
 }
