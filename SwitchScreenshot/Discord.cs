@@ -57,7 +57,7 @@ public class DiscordBot
 
     private Task Log(LogMessage message)
     {
-        Console.WriteLine($"({message.Severity}) {message.Message}");
+        Console.WriteLine($"[Discord] ({message.Severity}) {message.Source}: {message.Message}");
         return Task.CompletedTask;
     }
 }
