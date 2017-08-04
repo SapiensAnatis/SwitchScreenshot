@@ -45,14 +45,21 @@ public class DiscordBot
     {
         var Message = messageIn as SocketUserMessage;
         if (Message == null) return; // Return if it was a system message or other message not written by a user
+
+        if (Message.Author.Id == _Client.CurrentUser.Id) return; // No recursion pls
+
+        if (!(Message.Channel is SocketDMChannel channel)) return; // Not in guilds pls
         
         // So, we don't really need a command prefix for this bot; because it only really has a few commands
         // and operates almost entirely through DMs. 
         var Context = new CommandContext(_Client, Message);
         // Exec command. Use 0 instead of starting after prefix because there is no prefix
         var Result = await _Commands.ExecuteAsync(Context, 0, _Services);
-        if (!Result.IsSuccess)
-            await Context.Channel.SendMessageAsync(Result.ErrorReason);
+        /* if (!Result.IsSuccess)
+            await Context.Channel.SendMessageAsync(Result.ErrorReason); 
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            No command prefix, the bot thinks everything is a command and spams the chat a lot.
+            It won't work in servers so not an issue */
     }
 
     private Task Log(LogMessage message)
@@ -70,5 +77,6 @@ public class CommandModule : ModuleBase
     public async Task Register([Summary("The @username to register as the Twitter account")] string username)
     {
         // TODO
+        ReplyAsync($"Hello {username}");
     }
 }
