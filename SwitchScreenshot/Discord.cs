@@ -87,6 +87,6 @@ public class CommandModule : ModuleBase
     public async Task Register([Summary("The @username to register as the Twitter account")] string username)
     {
         // TODO
-        ReplyAsync($"Hello {username}");
+        await ReplyAsync($"Hello {username}");
     }
 }
