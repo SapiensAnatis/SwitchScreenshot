@@ -56,12 +56,19 @@ public class DiscordBot
         // Exec command. Use 0 instead of starting after prefix because there is no prefix
         var Result = await _Commands.ExecuteAsync(Context, 0, _Services);
         if (!Result.IsSuccess) {
+            await Log(
+                new LogMessage(
+                    LogSeverity.Info, "Commands", 
+                    $"Failed to parse command message '{Message.Content}': {Result.ErrorReason}"
+                )
+            );
+
             switch (Result.Error) {
                 case CommandError.BadArgCount:
-                    await Context.Channel.SendMessageAsync("Insufficient arguments!");
+                    await Context.Channel.SendMessageAsync("You provided the wrong number of arguments for that command.");
                     break;
                 case CommandError.UnknownCommand:
-                    await Context.Channel.SendMessageAsync("Command not found. Valid commands are: register, unregister");
+                    await Context.Channel.SendMessageAsync("I don't know that command. Valid commands are: register, unregister");
                     break;
                 default:
                     await Context.Channel.SendMessageAsync(Result.ErrorReason);
