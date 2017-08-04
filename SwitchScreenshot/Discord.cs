@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Reflection;
 using Discord;
@@ -93,7 +94,24 @@ public class CommandModule : ModuleBase
     [Command("register"), Summary("Register a Twitter account to the Discord account in use to enable screenshot mirroring.")]
     public async Task Register([Remainder, Summary("The @username to register as the Twitter account")] string username)
     {
-        // TODO
+        /* Input validation
+         * Twitter usernames cannot:
+         *
+         * - Contain the words Twitter or Admin unless official accounts (I'll let this one slide, because those usernames could be 
+         *   posting screenshots for whatever reason)
+         * - Be longer than 15 characters
+         * - Contain non-alphanumeric characters that aren't underscores
+         *
+         */
+        
+        if (username.Length > 15) {
+            await ReplyAsync("That's an invalid Twitter username; it's too long.");
+            return;
+        } else if (username.All(c => char.IsLetterOrDigit(c) || c == '_')) { // Asserts that all characters in string are either alphanumeric or underscores.
+            await ReplyAsync("That's an invalid Twitter username; it contains disallowed characters.");
+            return;
+        }
+
         await ReplyAsync($"Hello {username}");
     }
 }
