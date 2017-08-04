@@ -13,6 +13,7 @@ namespace SwitchScreenshot.Discord
     {
         private CommandService _Commands;
         private DiscordSocketClient _Client;
+        private ServiceCollection _ServiceCollection;
         private IServiceProvider _Services;
 
         public static void Init() => new DiscordBot().Start().GetAwaiter().GetResult();
@@ -26,7 +27,11 @@ namespace SwitchScreenshot.Discord
                 "/home/jay/Programming/SwitchScreenshot/SwitchScreenshot/DiscordToken.txt"
             )[0]; // First line of file to avoid trailing newlines. Also hardcoded path cause this isn't a public bot
 
-            _Services = new ServiceCollection().BuildServiceProvider();
+            _ServiceCollection = new ServiceCollection();
+            // Registering DI services
+            _ServiceCollection.AddScoped<SwitchScreenshot.Main.Data>();
+
+            _Services = _ServiceCollection.BuildServiceProvider();
 
             await InstallCommands();
 
@@ -88,6 +93,12 @@ namespace SwitchScreenshot.Discord
 
     public class CommandModule : ModuleBase
     {
+        private SwitchScreenshot.Main.Data _SQLService; 
+        public CommandModule(SwitchScreenshot.Main.Data SQLService)
+        {
+            _SQLService = SQLService;
+        }
+
         [Command("register"), Summary("Register a Twitter account to the Discord account in use to enable screenshot mirroring.")]
         public async Task Register([Remainder, Summary("The @username to register as the Twitter account")] string username)
         {
@@ -120,7 +131,7 @@ namespace SwitchScreenshot.Discord
             // TODO: Log this in a DB
             // Relationship: Twitter username to discord users
             // (we will be looking up Twitter usernames on tweet detection)
-
+            _SQLService.SubscribeUser(Author.Id, username);
         }
     }
 
