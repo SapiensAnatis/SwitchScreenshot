@@ -84,15 +84,4 @@ namespace SwitchScreenshot.Main
             // Can select additional data from DiscordUsers with this ID if we want, but not for now.
         }
     }
-
-    // Static class which both namespaces can access and use.
-
-    // The Discord side needs to update it with new registrations. 
-    // Twitter side does not need to use it as it's just reading tweets and sending signals.
-    // This namespace needs to read it to convert twitter usernames to Discord user IDs
-    static class Data
-    {
-        // Indexed by Twitter username you'll find a list of discord user IDs (ulong)
-        public static Dictionary<ulong, List<ulong>> Registrations = new Dictionary<ulong, List<ulong>>();
-    }
 }
