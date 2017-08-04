@@ -27,6 +27,8 @@ public class DiscordBot
 
         await InstallCommands();
 
+        _Client.Log += Log;
+
         await _Client.LoginAsync(TokenType.Bot, Token);
         await _Client.StartAsync();
 
