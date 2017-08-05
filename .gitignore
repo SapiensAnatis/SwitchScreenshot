@@ -1,4 +1,6 @@
 SwitchScreenshot/DiscordToken.txt
+SwitchScreenshot/TwitterTokens.txt
+
 SwitchScreenshot/bin/*
 SwitchScreenshot/obj/*
 .vscode/*
