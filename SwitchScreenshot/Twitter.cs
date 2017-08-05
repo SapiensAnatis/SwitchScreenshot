@@ -1,5 +1,5 @@
 using System;
-using TweetSharp;
+using Tweetinvi;
 
 namespace SwitchScreenshot.Twitter
 {
@@ -10,7 +10,6 @@ namespace SwitchScreenshot.Twitter
         private static string _AccessToken = "";
         private static string _AccessSecretToken = "";
 
-        private static TwitterService _Service;
 
         // Can't use constructors because we have to have a method which we explicitly control outside
         // in order to delegate to a new thread. We don't need control over instance members from Main anyway.
@@ -26,12 +25,8 @@ namespace SwitchScreenshot.Twitter
             _AccessToken = TokenLines[2];
             _AccessSecretToken = TokenLines[3];
 
-            _Service = new TwitterService(
-                _ConsumerKey,
-                _ConsumerSecretKey,
-                _AccessToken,
-                _AccessSecretToken,
-            )
+            // "log in"
+            Auth.SetUserCredentials(_ConsumerKey, _ConsumerSecretKey, _AccessToken, _AccessSecretToken);
         }
     }
 }
