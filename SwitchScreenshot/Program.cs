@@ -16,10 +16,10 @@ namespace SwitchScreenshot.Main
             MySqlConnection Connection = null;
 
             try {
-                Console.WriteLine("Initializing database...");
+                Utils.MainLog("Initializing database", "Info", "Startup");
                 Connection = new MySqlConnection(Data.Credentials);
                 Connection.Open();
-                Console.WriteLine($"Connection opened. MySQL version: {Connection.ServerVersion}");
+                Utils.MainLog($"Connection opened. MySQL version: {Connection.ServerVersion}", "Info", "Startup");
 
                 // Get tables setup if not already
                 MySqlCommand Command = new MySqlCommand("CREATE DATABASE IF NOT EXISTS DTBridge;");
@@ -33,15 +33,14 @@ namespace SwitchScreenshot.Main
                 Command.CommandText = "CREATE TABLE IF NOT EXISTS DiscordTwitterUsers(DiscordId BIGINT UNSIGNED NOT NULL, TwitterId BIGINT UNSIGNED NOT NULL);";
                 Command.ExecuteNonQuery();
             } catch (MySqlException e) {
-                Console.WriteLine($"SQLError {e.ToString()}");
+                Utils.MainLog($"SQLError {e.ToString()}", "Error", "Startup");
                 return;
             } finally {
                 if (Connection != null) {
                     Connection.Close();
-                    Console.WriteLine("Connection closed.");
                 }
 
-                Console.WriteLine("Database initialization complete.");
+                Utils.MainLog("Database initialization complete.", "Info", "Startup");
             }
             
             
@@ -78,7 +77,11 @@ namespace SwitchScreenshot.Main
                     Results.Add(Reader.GetUInt64(0)); // Only one column
                 }
             } catch (MySqlException e) {
-                Console.WriteLine($"Error occured while looking up Twitter ID for relevant Discord users: {e.ToString()}");
+                Utils.MainLog(
+                    $"MySqlException occured while looking up Twitter ID for relevant Discord users: {e.ToString()}",
+                    "Error",
+                    "GetSubscribedUsers"
+                );
             } finally {
                 if (Reader != null) Reader.Close();
                 if (Connection != null) Connection.Close();
@@ -112,10 +115,23 @@ namespace SwitchScreenshot.Main
                 Command.Parameters.AddWithValue("@TwitterId", TwitterUserId);
                 Command.ExecuteNonQuery();
             } catch (MySqlException e) {
-                Console.WriteLine($"Error occured while updating DB records for recently registered user: {e.ToString()}");
+                Utils.MainLog(
+                    $"MySqlException occured while updating DB records for recently registered user: {e.ToString()}",
+                    "Error", "SubscribeUser");
             } finally {
                 if (Connection != null) Connection.Close();
             }
+        }
+    }
+
+    public static partial class Utils
+    {
+        // Was tempted to make my own enums and types (e.g. a copycat LogSeverity from D.NET) but it's probably not worth it
+        public static void MainLog(string message, string severity, string source)
+        {
+            string TimeString = TimeZoneInfo.ConvertTime(DateTime.Now, TimeZoneInfo.Local)
+                .ToString("HH:mm:ss");
+            Console.WriteLine($"[Main | {TimeString}] ({severity}) {source}: {message}");
         }
     }
 }

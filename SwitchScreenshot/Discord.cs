@@ -35,7 +35,7 @@ namespace SwitchScreenshot.Discord
 
             await InstallCommands();
 
-            _Client.Log += Utils.Log;
+            _Client.Log += Utils.DiscordLog;
 
             await _Client.LoginAsync(TokenType.Bot, Token);
             await _Client.StartAsync();
@@ -65,7 +65,7 @@ namespace SwitchScreenshot.Discord
             // Exec command. Use 0 instead of starting after prefix because there is no prefix
             var Result = await _Commands.ExecuteAsync(Context, 0, _Services);
             if (!Result.IsSuccess) {
-                await Utils.Log(
+                await Utils.DiscordLog(
                     new LogMessage(
                         LogSeverity.Info, "Commands", 
                         $"Failed to parse command message '{Message.Content}': {Result.ErrorReason}"
@@ -122,7 +122,7 @@ namespace SwitchScreenshot.Discord
             
             IUser Author = Context.Message.Author; // Shorthand
 
-            await Utils.Log(
+            await Utils.DiscordLog(
                 new LogMessage(LogSeverity.Info, "RegisterCommand", $"Twitter username validated - updating DB by adding" +  
                 $" Discord user {Author.Username}#{Author.Discriminator} (ID: {Author.Id}) under username @{username}")
             );
@@ -135,9 +135,9 @@ namespace SwitchScreenshot.Discord
         }
     }
 
-    public static class Utils
+    public static partial class Utils
     {
-        public static Task Log(LogMessage message)
+        public static Task DiscordLog(LogMessage message)
         {
             string TimeString = TimeZoneInfo.ConvertTime(DateTime.Now, TimeZoneInfo.Local)
                 .ToString("HH:mm:ss");
