@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="*" />
     <PackageReference Include="MySql.Data" Version="8.0.8-dmr" />
+    <PackageReference Include="TweetSharp" Version="2.3.1" />
   </ItemGroup>
 
 </Project>
