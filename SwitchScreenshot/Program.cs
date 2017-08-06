@@ -14,43 +14,7 @@ namespace SwitchScreenshot.Main
 
         static void Main(string[] args)
         {
-            
-            // Initialize database
-            // Connect
-            MySqlConnection Connection = null;
-
-            try {
-                Utils.MainLog("Initializing database", "Info", "Startup");
-                Connection = new MySqlConnection(Data.Credentials);
-                Connection.Open();
-                Utils.MainLog($"Connection opened. MySQL version: {Connection.ServerVersion}", "Info", "Startup");
-
-                // Get tables setup if not already
-                MySqlCommand Command = new MySqlCommand("CREATE DATABASE IF NOT EXISTS DTBridge;", Connection);
-                Command.ExecuteNonQuery();
-                
-                Command.CommandText = "USE DTBridge;";
-                Command.ExecuteNonQuery();
-
-                Command.CommandText = "CREATE TABLE IF NOT EXISTS DiscordUsers(Id BIGINT UNSIGNED NOT NULL PRIMARY KEY);";
-                Command.ExecuteNonQuery();
-
-                Command.CommandText = "CREATE TABLE IF NOT EXISTS TwitterUsers(Id BIGINT UNSIGNED NOT NULL PRIMARY KEY);";
-                Command.ExecuteNonQuery();
-                // Intermediary table
-                Command.CommandText = "CREATE TABLE IF NOT EXISTS DiscordTwitterUsers(DiscordId BIGINT UNSIGNED NOT NULL, TwitterId BIGINT UNSIGNED NOT NULL);";
-                Command.ExecuteNonQuery();
-
-            } catch (MySqlException e) {
-                Utils.MainLog($"SQLError {e.ToString()}", "Error", "Startup");
-                return;
-            } finally {
-                if (Connection != null) {
-                    Connection.Close();
-                }
-
-                Utils.MainLog("Database initialization complete.", "Info", "Startup");
-            }
+            // Now that I do no initial setup...no point opening a connection just to close it
             
             
             DiscordBotInstance = new SwitchScreenshot.Discord.DiscordBot();
@@ -69,11 +33,12 @@ namespace SwitchScreenshot.Main
 
         public Data()
         {
+            // DI magic
             this.Connection = new MySqlConnection(Credentials);
             Connection.Open();
         }
 
-        public static string Credentials = @"server=localhost;userid=DTBridgeBot;password=GOOD password;SslMode=None";
+        public static string Credentials = @"server=localhost;userid=SwitchScreenshotsBot;databse=SwitchScreenshotsDB;password=GOOD password;SslMode=None";
 
         public List<ulong> GetSubscribedUsers(long twitterId)
         {
