@@ -12,8 +12,6 @@ namespace SwitchScreenshot.Main
     {
         public static SwitchScreenshot.Discord.DiscordBot DiscordBotInstance;
         public static SwitchScreenshot.Twitter.TwitterBot TwitterBotInstance;
-        // Unless I call functions involving the client on the same thread, Client is null
-        public static Thread DiscordThread;
 
         static void Main(string[] args)
         {
