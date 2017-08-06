@@ -78,7 +78,11 @@ namespace SwitchScreenshot.Twitter
             Tweet.PublishTweet($"@{username}: Per their request, I will now be sending all screenshots you tweet from your Switch to {discordName}.");
         }
 
-        public 
+        public long GetUserId(string username)
+        {
+           var RelevantUser = User.GetUserFromScreenName(username);
+           return RelevantUser.Id; 
+        }
 
         
     }

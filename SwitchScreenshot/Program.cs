@@ -103,9 +103,8 @@ namespace SwitchScreenshot.Main
 
         public void SubscribeUser(ulong DiscordUserId, string TwitterUsername, string DiscordUsername)
         {
-            // TODO: query Twitter side for twitter ID from @whatever
-            // Until then placeholders for my theoretical SQL
-            ulong TwitterUserId = 0032309376230967;
+            var TwitterUsedId = Program.TwitterBotInstance.GetUserId(TwitterUsername);
+            
             try {
                 MySqlCommand Command = new MySqlCommand("INSERT IGNORE INTO DiscordUsers(Id) VALUES(@Id)");
                 Command.Connection = Connection;
