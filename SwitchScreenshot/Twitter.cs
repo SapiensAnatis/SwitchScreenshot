@@ -77,7 +77,6 @@ namespace SwitchScreenshot.Twitter
             if (!Result) 
                 Utils.TwitterLog($"Following user returned false.", "Error?", "SubscribeToUser");
             
-            // TODO: Reply to this message with <something> to stop this stalker from doing it
             Tweet.PublishTweet($"@{username}: Per their request, I will now be sending all screenshots you tweet from your Switch to {discordName}.");
         }
 
