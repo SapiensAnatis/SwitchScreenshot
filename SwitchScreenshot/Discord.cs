@@ -16,7 +16,7 @@ namespace SwitchScreenshot.Discord
         private ServiceCollection _ServiceCollection;
         private IServiceProvider _Services;
 
-        public static void Init() => new DiscordBot().Start().GetAwaiter().GetResult();
+        public void Init() => new DiscordBot().Start().GetAwaiter().GetResult();
 
         public async Task Start()
         {
@@ -28,8 +28,9 @@ namespace SwitchScreenshot.Discord
             )[0]; // First line of file to avoid trailing newlines. Also hardcoded path cause this isn't a public bot
 
             _ServiceCollection = new ServiceCollection();
-            // Registering DI services
+            // Registering DI services. Add this to allow writing to the database
             _ServiceCollection.AddScoped<SwitchScreenshot.Main.Data>();
+
 
             _Services = _ServiceCollection.BuildServiceProvider();
 
@@ -88,6 +89,11 @@ namespace SwitchScreenshot.Discord
             
         }
 
+        public async Task SendScreenshot(ulong recipientUserId)
+        {
+            
+        }
+
     }
 
 
@@ -127,11 +133,12 @@ namespace SwitchScreenshot.Discord
                 $" Discord user {Author.Username}#{Author.Discriminator} (ID: {Author.Id}) under username @{username}")
             );
 
-            await ReplyAsync($"Hello {username}");
-            // TODO: Log this in a DB
-            // Relationship: Twitter username to discord users
-            // (we will be looking up Twitter usernames on tweet detection)
+            await ReplyAsync($"I'll follow {username}");
             _SQLService.SubscribeUser(Author.Id, username);
+            SwitchScreenshot.Twitter.TwitterBot.SubscribeToUser(
+                username,
+                $"{Context.User.Username}#{Context.User.Discriminator}"
+            );
         }
     }
 

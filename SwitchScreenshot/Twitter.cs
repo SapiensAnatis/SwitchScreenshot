@@ -16,20 +16,15 @@ namespace SwitchScreenshot.Twitter
         private static string _AccessToken = "";
         private static string _AccessSecretToken = "";
 
-        private static ServiceCollection _ServiceCollection;
-        private static IServiceProvider _Services;
-
-        private static IUserStream _Stream;
+        private IUserStream _Stream;
 
         private SwitchScreenshot.Main.Data _DataInstance;
 
 
         // Can't use constructors because we have to have a method which we explicitly control outside
         // in order to delegate to a new thread. We don't need control over instance members from Main anyway.
-        public static void Init() => new TwitterBot().Start();
-        
-
-        private void Start()
+    
+        public void Init()
         {  
             // Initialize data instance
             _DataInstance = new SwitchScreenshot.Main.Data();

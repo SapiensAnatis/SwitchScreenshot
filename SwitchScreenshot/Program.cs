@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using Microsoft.Extensions.DependencyInjection;
-
+using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 
 // Controller
@@ -10,8 +9,12 @@ namespace SwitchScreenshot.Main
 {
     class Program
     {
+        public static SwitchScreenshot.Discord.DiscordBot DiscordBotInstance;
+        public static SwitchScreenshot.Twitter.TwitterBot TwitterBotInstance;
+
         static void Main(string[] args)
         {
+            
             // Initialize database
             // Connect
             MySqlConnection Connection = null;
@@ -45,11 +48,13 @@ namespace SwitchScreenshot.Main
             }
             
             
-            
+            DiscordBotInstance = new SwitchScreenshot.Discord.DiscordBot();
             // Start the Discord bot on a new thread
-            Thread DiscordThread = new Thread(SwitchScreenshot.Discord.DiscordBot.Init);
+            Thread DiscordThread = new Thread(DiscordBotInstance.Init);
             DiscordThread.Start();
-            Thread TwitterThread = new Thread(SwitchScreenshot.Twitter.TwitterBot.Init);
+
+            TwitterBotInstance = new SwitchScreenshot.Twitter.TwitterBot();
+            Thread TwitterThread = new Thread(TwitterBotInstance.Init);
             TwitterThread.Start();
         }
     }
@@ -126,10 +131,13 @@ namespace SwitchScreenshot.Main
             }
         }
 
-        public void PassScreenshot(long twitterId, string screenshotUrl)
+        
+        public async Task PassScreenshot(long twitterId, string screenshotUrl)
         {
             // Find out what discord user(s) to send it to
-            var Users = GetSubscribedUsers()
+            var UserIds = GetSubscribedUsers(twitterId);
+            foreach (ulong UserId in UserIds)
+                await Program.DiscordBotInstance.SendScreenshot(UserId);
         }
     }
 
