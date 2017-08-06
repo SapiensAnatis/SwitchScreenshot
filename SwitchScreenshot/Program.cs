@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
@@ -104,6 +105,42 @@ namespace SwitchScreenshot.Main
             return GetSubscribedUsers(TwitterUserId);
         }
 
+        // Method we use to list a discord user's subscriptions
+        public List<string> GetSubscriptions(ulong discordId)
+        {
+            // Twitter IDs are always longs -- while they're stored as UNSIGNED BIGINTS I could get them as ulongs 
+            // but I'll keep them as longs for consistency's sake
+            
+            // This is a list of Ids, which aren't necessarily human-readable. We will parse to usernames later.
+            List<long> IdResults = new List<long>();
+
+            try {
+                if (Connection.State == ConnectionState.Closed ) Connection.Open();
+
+                MySqlCommand Command = new MySqlCommand("SELECT TwitterId FROM DiscordTwitterUsers WHERE DiscordId=@D_ID");
+                Command.Prepare();
+                Command.Parameters.AddWithValue("@D_ID", discordId);
+                Reader = Command.ExecuteReader();
+                while (Reader.Read())
+                {
+                    // Read all the twitter ids that match and add them to list
+                    IdResults.Add(Reader.GetInt64(0));
+                }
+            } catch (MySqlException e) {
+                Utils.MainLog(
+                    $"MySqlException occured while getting subscriptions for a Discord user: {e.ToString()}",
+                    "Error",
+                    "GetSubscriptions"
+                );
+            } finally {
+                if (Reader != null) Reader.Close();
+                if (Connection != null) Connection.Close();
+            }
+            // Convert all entries to usernames using Twitter bot's lookup
+            List<string> UsernameResults = IdResults.Select(id => Program.TwitterBotInstance.GetUsername(id)).ToList(); 
+            return UsernameResults;
+        }
+
         public void SubscribeUser(ulong discordUserId, string twitterUsername, string discordUsername)
         {
             var TwitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
@@ -182,7 +219,6 @@ namespace SwitchScreenshot.Main
                 if (Connection != null) Connection.Close();
             }
         }
-        
 
         
         public async Task PassScreenshot(long twitterId, string screenshotUrl)

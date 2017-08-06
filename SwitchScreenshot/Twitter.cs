@@ -100,6 +100,12 @@ namespace SwitchScreenshot.Twitter
            return RelevantUser.Id; 
         }
 
+        public string GetUsername(long userId)
+        {
+            var RelevantUser = User.GetUserFromId(userId);
+           return RelevantUser.ScreenName; 
+        }
+
         
     }
 

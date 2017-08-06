@@ -149,6 +149,19 @@ namespace SwitchScreenshot.Discord
             _SQLService.UnsubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
             await ReplyAsync($"Successfully unsubscribed from @{username}. You will no longer receive their screenshots.");
         }
+
+        [Command("list"), Summary("List a user's subscriptions - with updated usernames if changed.")]
+        public async Task List()
+        {
+            var SubList = _SQLService.GetSubscriptions(Context.User.Id);
+            var ReplyString = "You are subscribed to the following users:\n";
+            foreach (string TwitterUsername in SubList)
+            {
+                ReplyString += $"\t - @{TwitterUsername}\n";
+            }
+
+            await ReplyAsync(ReplyString);
+        }
     }
 
     public static partial class Utils
