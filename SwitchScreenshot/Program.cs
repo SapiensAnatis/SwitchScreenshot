@@ -17,6 +17,7 @@ namespace SwitchScreenshot.Main
 
         static void Main(string[] args)
         {
+            Utils.MainLog("Application started", "Info", "Main");
             // Now that I do no initial setup...no point opening a connection just to close it
             DiscordBotInstance = new SwitchScreenshot.Discord.DiscordBot();
 
