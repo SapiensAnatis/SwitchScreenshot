@@ -117,7 +117,7 @@ namespace SwitchScreenshot.Main
             try {
                 if (Connection.State == ConnectionState.Closed ) Connection.Open();
 
-                MySqlCommand Command = new MySqlCommand("SELECT TwitterId FROM DiscordTwitterUsers WHERE DiscordId=@D_ID");
+                MySqlCommand Command = new MySqlCommand("SELECT TwitterId FROM DiscordTwitterUsers WHERE DiscordId=@D_ID", Connection);
                 Command.Prepare();
                 Command.Parameters.AddWithValue("@D_ID", discordId);
                 Reader = Command.ExecuteReader();
