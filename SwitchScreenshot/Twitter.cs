@@ -81,6 +81,19 @@ namespace SwitchScreenshot.Twitter
             Tweet.PublishTweet($"@{username}: Per their request, I will now be sending all screenshots you tweet from your Switch to {discordName}.");
         }
 
+        public void AlertUnsubscribedUser(long userId, string discordName)
+        {
+            var RelevantUser = User.GetUserFromId(userId);
+            Tweet.PublishTweet($"@{RelevantUser.ScreenName}: {discordName} has requested that Switch screenshots from you are no longer PMed to them.");
+        }
+
+        // We only unfollow if nobody is subscribed anymore
+        public void UnfollowUser(long userId, string discordName)
+        {
+            var RelevantUser = User.GetUserFromId(userId);
+            User.UnFollowUser(RelevantUser);
+        }
+
         public long GetUserId(string username)
         {
            var RelevantUser = User.GetUserFromScreenName(username);

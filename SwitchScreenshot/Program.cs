@@ -96,15 +96,23 @@ namespace SwitchScreenshot.Main
             // Can select additional data from DiscordUsers with this ID if we want, but not for now.
         }
 
+        // Overload to get subbed users from only username - used in Discord bot to affirm user is subbed
+        // where we only have the username, and don't want to directly interact with the twitter bot
+        public List<ulong> GetSubscribedUsers(string twitterUsername)
+        {
+            long TwitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
+            return GetSubscribedUsers(TwitterUserId);
+        }
+
         public void SubscribeUser(ulong discordUserId, string twitterUsername, string discordUsername)
         {
             var TwitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
 
             try {
+                if (Connection.State == ConnectionState.Closed ) Connection.Open();
                 // INSERT IGNORE: we are dealing with primary keys in these databases, so if a user subscribes to multiple accounts we
                 // run into an exception, as they're supposed to be unique. IGNORE ignores that because we don't care.
-                MySqlCommand Command = new MySqlCommand("INSERT IGNORE INTO DiscordUsers(Id) VALUES(@Id)");
-                Command.Connection = Connection;
+                MySqlCommand Command = new MySqlCommand("INSERT IGNORE INTO DiscordUsers(Id) VALUES(@Id)", Connection);
                 Command.Prepare();
                 Command.Parameters.AddWithValue("@Id", discordUserId);
                 Command.ExecuteNonQuery();
@@ -130,6 +138,50 @@ namespace SwitchScreenshot.Main
                 if (Connection != null) Connection.Close();
             }
         }
+
+        public void UnsubscribeUser(ulong discordUserId, string twitterUsername, string discordUsername)
+        {
+            MySqlDataReader Reader = null;
+            long twitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
+
+            try {
+                if (Connection.State == ConnectionState.Closed ) Connection.Open();
+                // First delete the relationship, as we know that's gone
+                MySqlCommand Command = new MySqlCommand("DELETE FROM DiscordTwitterUsers WHERE DiscordId=@D_ID AND TwitterId=@T_ID;", Connection);
+                Command.Prepare();
+                Command.Parameters.AddWithValue("@D_ID", discordUserId);
+                Command.Parameters.AddWithValue("@T_ID", twitterUserId);
+                Command.ExecuteNonQuery();
+
+                // Cleanup:
+                // If that was the only relationship they had, now remove the discord/twitter users from their standalone tables
+                // If statements in pure SQL weren't playing nice so I do them in the code
+                Command.CommandText = "SELECT 1 FROM DiscordTwitterUsers WHERE DiscordId=@D_ID;";
+                Reader = Command.ExecuteReader();
+                if (!Reader.Read()) { // If empty result
+                    Command.CommandText = "DELETE FROM DiscordUsers WHERE Id=@D_ID;";
+                    Command.ExecuteNonQuery();
+                }
+
+                // Then do the same for out-of-use Twitter accounts
+                Command.CommandText = "SELECT 1 FROM DiscordTwitterUsers WHERE TwitterId=@T_ID;";
+                Reader = Command.ExecuteReader();
+                if (!Reader.Read()) {
+                    Command.CommandText = "DELETE FROM TwitterUsers WHERE Id=@T_ID;";
+                    Command.ExecuteNonQuery();
+                    // If nobody is interested in this twitter account, unfollow
+                    Program.TwitterBotInstance.UnfollowUser(twitterUserId, discordUsername);
+                }
+            } catch (MySqlException e) {
+                Utils.MainLog(
+                    $"MySqlException occured while unsubscribing users: {e.ToString()}",
+                    "Error", "UnsubscribeUser");
+            } finally {
+                if (Reader != null) Reader.Close();
+                if (Connection != null) Connection.Close();
+            }
+        }
+        
 
         
         public async Task PassScreenshot(long twitterId, string screenshotUrl)

@@ -128,7 +128,7 @@ namespace SwitchScreenshot.Discord
             _SQLService.SubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
         }
 
-        // TODO: allow a user to view their registrations, allow them to unregister
+        // TODO: allow a user to view their registrations
         [Command("unregister"), Summary("Disassociate a Twitter account to no longer receive messages from it.")]
         public async Task Unregister([Remainder, Summary("The @username to unregister (must already be registered to it)")] string username)
         {
@@ -138,6 +138,15 @@ namespace SwitchScreenshot.Discord
                 await ReplyAsync(Reason);
                 return;
             }
+
+            // Check if they're actually subscribed first
+            IUser Author = Context.Message.Author;
+            if (!_SQLService.GetSubscribedUsers(username).Contains(Author.Id)) {
+                await ReplyAsync("You aren't subscribed to that user. If you are, and they changed their username, enter the new one.");
+                return;
+            }
+
+            _SQLService.UnsubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
         }
     }
 
@@ -171,7 +180,7 @@ namespace SwitchScreenshot.Discord
             } else if (!username.All(c => char.IsLetterOrDigit(c) || c == '_')) { // Asserts that all characters in string are either alphanumeric or underscores.
                 return (false, "That's an invalid Twitter username; it contains disallowed characters.");
             }
-
+            
             return (true, "");
         }
     }
