@@ -147,6 +147,7 @@ namespace SwitchScreenshot.Discord
             }
 
             _SQLService.UnsubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
+            await ReplyAsync($"Successfully unsubscribed from @{username}. You will no longer receive their screenshots.");
         }
     }
 
