@@ -5,4 +5,4 @@ It was never intended to be publically used, so it's got hardcoded paths and a l
 
 Commands:
 
-- DM the bot `register \<twitterusername\>` to subscribe to a twitter username and receive all single-image tweets with #NintendoSwitch in them to your Discord inbox.
+- DM the bot `register <twitterusername>` to subscribe to a twitter username and receive all single-image tweets with #NintendoSwitch in them to your Discord inbox.
