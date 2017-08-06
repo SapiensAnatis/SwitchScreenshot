@@ -101,15 +101,15 @@ namespace SwitchScreenshot.Main
             // Can select additional data from DiscordUsers with this ID if we want, but not for now.
         }
 
-        public void SubscribeUser(ulong DiscordUserId, string TwitterUsername, string DiscordUsername)
+        public void SubscribeUser(ulong discordUserId, string twitterUsername, string discordUsername)
         {
-            var TwitterUserId = Program.TwitterBotInstance.GetUserId(TwitterUsername);
+            var TwitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
 
             try {
                 MySqlCommand Command = new MySqlCommand("INSERT IGNORE INTO DiscordUsers(Id) VALUES(@Id)");
                 Command.Connection = Connection;
                 Command.Prepare();
-                Command.Parameters.AddWithValue("@Id", DiscordUserId);
+                Command.Parameters.AddWithValue("@Id", discordUserId);
                 Command.ExecuteNonQuery();
 
                 Command.CommandText = "INSERT IGNORE INTO TwitterUsers(Id) VALUES (@Id2)";
@@ -119,11 +119,11 @@ namespace SwitchScreenshot.Main
 
                 Command.CommandText = "INSERT IGNORE INTO DiscordTwitterUsers(DiscordId, TwitterId) VALUES(@DiscordId, @TwitterId)";
                 Command.Prepare();
-                Command.Parameters.AddWithValue("@DiscordId", DiscordUserId);
+                Command.Parameters.AddWithValue("@DiscordId", discordUserId);
                 Command.Parameters.AddWithValue("@TwitterId", TwitterUserId);
                 Command.ExecuteNonQuery();
 
-                Program.TwitterBotInstance.FollowUser(TwitterUsername, DiscordUsername);
+                Program.TwitterBotInstance.FollowUser(twitterUsername, discordUsername);
             } catch (MySqlException e) {
                 Utils.MainLog(
                     $"MySqlException occured while updating DB records for recently registered user: {e.ToString()}",
