@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 
 using MySql.Data.MySqlClient;
 
@@ -48,6 +49,8 @@ namespace SwitchScreenshot.Main
             // Start the Discord bot on a new thread
             Thread DiscordThread = new Thread(SwitchScreenshot.Discord.DiscordBot.Init);
             DiscordThread.Start();
+            Thread TwitterThread = new Thread(SwitchScreenshot.Twitter.TwitterBot.Init);
+            TwitterThread.Start();
         }
     }
     public class Data 
@@ -61,7 +64,7 @@ namespace SwitchScreenshot.Main
 
         public static string Credentials = @"server=localhost;userid=DTBridgeBot;password=GOOD password;database=DTBridgeDB;SslMode=None";
 
-        public List<ulong> GetSubscribedUsers(ulong twitterId)
+        public List<ulong> GetSubscribedUsers(long twitterId)
         {
             MySqlDataReader Reader = null;
             List<ulong> Results = new List<ulong>();
@@ -121,6 +124,12 @@ namespace SwitchScreenshot.Main
             } finally {
                 if (Connection != null) Connection.Close();
             }
+        }
+
+        public void PassScreenshot(long twitterId, string screenshotUrl)
+        {
+            // Find out what discord user(s) to send it to
+            var Users = GetSubscribedUsers()
         }
     }
 
