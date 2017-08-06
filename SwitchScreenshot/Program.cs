@@ -49,6 +49,7 @@ namespace SwitchScreenshot.Main
          */
 
         public MySqlConnection Connection { get; set; }
+        public MySqlDataReader Reader { get; set; }
 
         public Data()
         {
@@ -64,7 +65,6 @@ namespace SwitchScreenshot.Main
         // they are detected.
         public List<ulong> GetSubscribedUsers(long twitterId)
         {
-            MySqlDataReader Reader = null;
             List<ulong> Results = new List<ulong>();
 
             try {
@@ -141,7 +141,6 @@ namespace SwitchScreenshot.Main
 
         public void UnsubscribeUser(ulong discordUserId, string twitterUsername, string discordUsername)
         {
-            MySqlDataReader Reader = null;
             long twitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
 
             try {
@@ -159,6 +158,7 @@ namespace SwitchScreenshot.Main
                 Command.CommandText = "SELECT 1 FROM DiscordTwitterUsers WHERE DiscordId=@D_ID;";
                 Reader = Command.ExecuteReader();
                 if (!Reader.Read()) { // If empty result
+                    Reader.Close(); // Close off before doing more commands
                     Command.CommandText = "DELETE FROM DiscordUsers WHERE Id=@D_ID;";
                     Command.ExecuteNonQuery();
                 }
@@ -167,6 +167,7 @@ namespace SwitchScreenshot.Main
                 Command.CommandText = "SELECT 1 FROM DiscordTwitterUsers WHERE TwitterId=@T_ID;";
                 Reader = Command.ExecuteReader();
                 if (!Reader.Read()) {
+                    Reader.Close();
                     Command.CommandText = "DELETE FROM TwitterUsers WHERE Id=@T_ID;";
                     Command.ExecuteNonQuery();
                     // If nobody is interested in this twitter account, unfollow
