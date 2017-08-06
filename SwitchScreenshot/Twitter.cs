@@ -5,6 +5,7 @@ using Tweetinvi;
 using Tweetinvi.Streaming;
 using Microsoft.Extensions.DependencyInjection;
 using Tweetinvi.Events;
+using System.Threading.Tasks;
 
 namespace SwitchScreenshot.Twitter
 {
@@ -24,7 +25,7 @@ namespace SwitchScreenshot.Twitter
         // Can't use constructors because we have to have a method which we explicitly control outside
         // in order to delegate to a new thread. We don't need control over instance members from Main anyway.
     
-        public void Init()
+        public async Task Init()
         {  
             // Initialize data instance
             _DataInstance = new SwitchScreenshot.Main.Data();
@@ -50,9 +51,7 @@ namespace SwitchScreenshot.Twitter
 
             _Stream.TweetCreatedByFriend += OnFollowerTweet;
             
-            _Stream.StartStream();
-            
-            
+            await _Stream.StartStreamAsync(); 
         }
 
         private async void OnFollowerTweet(object sender, TweetReceivedEventArgs args)
@@ -68,7 +67,7 @@ namespace SwitchScreenshot.Twitter
             await _DataInstance.PassScreenshot(args.Tweet.CreatedBy.Id, Tweet.Media.FirstOrDefault().MediaURLHttps);
         }
 
-        public void FollowUser(string username, string discordName)
+        public async Task FollowUser(string username, string discordName)
         {
             // Follow a user when they're subscribed to.
             var RelevantUser = User.GetUserFromScreenName(username);
@@ -77,32 +76,33 @@ namespace SwitchScreenshot.Twitter
             if (!Result) 
                 Utils.TwitterLog($"Following user returned false.", "Error?", "SubscribeToUser");
             
-            Tweet.PublishTweet($"@{username}: Per their request, I will now be sending all screenshots you tweet from your Switch to {discordName}.");
+            await TweetAsync.PublishTweet($"@{username}: Per their request, I will now be sending all screenshots you tweet from your Switch to {discordName}.");
         }
 
-        public void AlertUnsubscribedUser(long userId, string discordName)
+        public async Task AlertUnsubscribedUser(long userId, string discordName)
         {
-            var RelevantUser = User.GetUserFromId(userId);
-            Tweet.PublishTweet($"@{RelevantUser.ScreenName}: {discordName} has requested that Switch screenshots from you are no longer PMed to them.");
+            var RelevantUser = await UserAsync.GetUserFromId(userId);
+            await TweetAsync.PublishTweet($"@{RelevantUser.ScreenName}: {discordName} has requested that Switch screenshots from you are no longer PMed to them.");
         }
 
         // We only unfollow if nobody is subscribed anymore
-        public void UnfollowUser(long userId, string discordName)
+        public async Task UnfollowUser(long userId, string discordName)
         {
-            var RelevantUser = User.GetUserFromId(userId);
+            var RelevantUser = await UserAsync.GetUserFromId(userId);
+            // For some reason, User has an unfollow method but UserAsync doesn't
             User.UnFollowUser(RelevantUser);
         }
 
-        public long GetUserId(string username)
+        public async Task<long> GetUserId(string username)
         {
-           var RelevantUser = User.GetUserFromScreenName(username);
+           var RelevantUser = await UserAsync.GetUserFromScreenName(username);
            return RelevantUser.Id; 
         }
 
-        public string GetUsername(long userId)
+        public async Task<string> GetUsername(long userId)
         {
-            var RelevantUser = User.GetUserFromId(userId);
-           return RelevantUser.ScreenName; 
+            var RelevantUser = await UserAsync.GetUserFromId(userId);
+            return RelevantUser.ScreenName; 
         }
 
         

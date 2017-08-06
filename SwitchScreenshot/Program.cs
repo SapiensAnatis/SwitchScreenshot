@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +26,7 @@ namespace SwitchScreenshot.Main
             DiscordThread.Start();
 
             TwitterBotInstance = new SwitchScreenshot.Twitter.TwitterBot();
-            var TwitterThread = new Thread(TwitterBotInstance.Init);
+            var TwitterThread = new Thread(TwitterBotInstance.Init().GetAwaiter().GetResult);
             TwitterThread.Start();
         }
     }
@@ -50,7 +51,7 @@ namespace SwitchScreenshot.Main
          */
 
         public MySqlConnection Connection { get; set; }
-        public MySqlDataReader Reader { get; set; }
+        public DbDataReader Reader { get; set; }
 
         public Data()
         {
@@ -64,21 +65,21 @@ namespace SwitchScreenshot.Main
 
         // Method to return a list of Discord user IDs that are subscribed to a given twitter user. Used in determining who to PM screenshots to when
         // they are detected.
-        public List<ulong> GetSubscribedUsers(long twitterId)
+        public async Task<List<ulong>> GetSubscribedUsers(long twitterId)
         {
             List<ulong> Results = new List<ulong>();
 
             try {
-                if (Connection.State == ConnectionState.Closed ) Connection.Open();
+                if (Connection.State == ConnectionState.Closed ) await Connection.OpenAsync();
 
                 MySqlCommand Command = new MySqlCommand("SELECT DiscordId FROM DiscordTwitterUsers WHERE TwitterId=@twitterId", Connection);
                 Command.Prepare();
 
                 Command.Parameters.AddWithValue("@twitterId", twitterId);
-                Reader = Command.ExecuteReader();
+                Reader = await Command.ExecuteReaderAsync();
 
-                while (Reader.Read()) {
-                    Results.Add(Reader.GetUInt64(0)); // Only one column
+                while (await Reader.ReadAsync()) {
+                    Results.Add((ulong)Reader.GetInt64(0)); // Only one column
                 }
             } catch (MySqlException e) {
                 Utils.MainLog(
@@ -99,14 +100,14 @@ namespace SwitchScreenshot.Main
 
         // Overload to get subbed users from only username - used in Discord bot to affirm user is subbed
         // where we only have the username, and don't want to directly interact with the twitter bot
-        public List<ulong> GetSubscribedUsers(string twitterUsername)
+        public async Task<List<ulong>> GetSubscribedUsers(string twitterUsername)
         {
-            long TwitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
-            return GetSubscribedUsers(TwitterUserId);
+            long TwitterUserId = await Program.TwitterBotInstance.GetUserId(twitterUsername);
+            return await GetSubscribedUsers(TwitterUserId);
         }
 
         // Method we use to list a discord user's subscriptions
-        public List<string> GetSubscriptions(ulong discordId)
+        public async Task<List<string>> GetSubscriptions(ulong discordId)
         {
             // Twitter IDs are always longs -- while they're stored as UNSIGNED BIGINTS I could get them as ulongs 
             // but I'll keep them as longs for consistency's sake
@@ -115,13 +116,13 @@ namespace SwitchScreenshot.Main
             List<long> IdResults = new List<long>();
 
             try {
-                if (Connection.State == ConnectionState.Closed ) Connection.Open();
+                if (Connection.State == ConnectionState.Closed ) await Connection.OpenAsync();
 
                 MySqlCommand Command = new MySqlCommand("SELECT TwitterId FROM DiscordTwitterUsers WHERE DiscordId=@D_ID", Connection);
                 Command.Prepare();
                 Command.Parameters.AddWithValue("@D_ID", discordId);
-                Reader = Command.ExecuteReader();
-                while (Reader.Read())
+                Reader = await Command.ExecuteReaderAsync();
+                while (await Reader.ReadAsync())
                 {
                     // Read all the twitter ids that match and add them to list
                     IdResults.Add(Reader.GetInt64(0));
@@ -134,70 +135,79 @@ namespace SwitchScreenshot.Main
                 );
             } finally {
                 if (Reader != null) Reader.Close();
-                if (Connection != null) Connection.Close();
+                if (Connection != null) await Connection.CloseAsync();
             }
+
+            // Internal function to convert enumerable as LINQ doesn't accept async predicates
+            async Task<List<string>> IdsToUsernames(List<long> IdList)
+            {
+                IEnumerable<Task<string>> TaskList = IdList.Select(id => Program.TwitterBotInstance.GetUsername(id));
+                var Usernames = await Task.WhenAll(TaskList);
+                return Usernames.ToList();
+            }
+
             // Convert all entries to usernames using Twitter bot's lookup
-            List<string> UsernameResults = IdResults.Select(id => Program.TwitterBotInstance.GetUsername(id)).ToList(); 
+            List<string> UsernameResults = await IdsToUsernames(IdResults);
             return UsernameResults;
         }
 
-        public void SubscribeUser(ulong discordUserId, string twitterUsername, string discordUsername)
+        public async Task SubscribeUser(ulong discordUserId, string twitterUsername, string discordUsername)
         {
             var TwitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
 
             try {
-                if (Connection.State == ConnectionState.Closed ) Connection.Open();
+                if (Connection.State == ConnectionState.Closed ) await Connection.OpenAsync();
                 // INSERT IGNORE: we are dealing with primary keys in these databases, so if a user subscribes to multiple accounts we
                 // run into an exception, as they're supposed to be unique. IGNORE ignores that because we don't care.
                 MySqlCommand Command = new MySqlCommand("INSERT IGNORE INTO DiscordUsers(Id) VALUES(@Id)", Connection);
                 Command.Prepare();
                 Command.Parameters.AddWithValue("@Id", discordUserId);
-                Command.ExecuteNonQuery();
+                await Command.ExecuteNonQueryAsync();
 
                 Command.CommandText = "INSERT IGNORE INTO TwitterUsers(Id) VALUES (@Id2)";
                 Command.Prepare();
                 Command.Parameters.AddWithValue("@Id2", TwitterUserId);
-                Command.ExecuteNonQuery();
+                await Command.ExecuteNonQueryAsync();
 
                 Command.CommandText = "INSERT IGNORE INTO DiscordTwitterUsers(DiscordId, TwitterId) VALUES(@DiscordId, @TwitterId)";
                 Command.Prepare();
                 Command.Parameters.AddWithValue("@DiscordId", discordUserId);
                 Command.Parameters.AddWithValue("@TwitterId", TwitterUserId);
-                Command.ExecuteNonQuery();
+                await Command.ExecuteNonQueryAsync();
 
                 // Follow the user so that we can narrow down our events (not looking at the whole of Twitter)
-                Program.TwitterBotInstance.FollowUser(twitterUsername, discordUsername);
+                await Program.TwitterBotInstance.FollowUser(twitterUsername, discordUsername);
             } catch (MySqlException e) {
                 Utils.MainLog(
                     $"MySqlException occured while updating DB records for recently registered user: {e.ToString()}",
                     "Error", "SubscribeUser");
             } finally {
-                if (Connection != null) Connection.Close();
+                if (Connection != null) await Connection.CloseAsync();
             }
         }
 
-        public void UnsubscribeUser(ulong discordUserId, string twitterUsername, string discordUsername)
+        public async Task UnsubscribeUser(ulong discordUserId, string twitterUsername, string discordUsername)
         {
-            long twitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
+            long twitterUserId = await Program.TwitterBotInstance.GetUserId(twitterUsername);
 
             try {
-                if (Connection.State == ConnectionState.Closed ) Connection.Open();
+                if (Connection.State == ConnectionState.Closed ) await Connection.OpenAsync();
                 // First delete the relationship, as we know that's gone
                 MySqlCommand Command = new MySqlCommand("DELETE FROM DiscordTwitterUsers WHERE DiscordId=@D_ID AND TwitterId=@T_ID;", Connection);
                 Command.Prepare();
                 Command.Parameters.AddWithValue("@D_ID", discordUserId);
                 Command.Parameters.AddWithValue("@T_ID", twitterUserId);
-                Command.ExecuteNonQuery();
+                await Command.ExecuteNonQueryAsync();
 
                 // Cleanup:
                 // If that was the only relationship they had, now remove the discord/twitter users from their standalone tables
                 // If statements in pure SQL weren't playing nice so I do them in the code
                 Command.CommandText = "SELECT 1 FROM DiscordTwitterUsers WHERE DiscordId=@D_ID;";
-                Reader = Command.ExecuteReader();
+                Reader = await Command.ExecuteReaderAsync();
                 if (!Reader.Read()) { // If empty result
                     Reader.Close(); // Close off before doing more commands
                     Command.CommandText = "DELETE FROM DiscordUsers WHERE Id=@D_ID;";
-                    Command.ExecuteNonQuery();
+                    await Command.ExecuteNonQueryAsync();
                 }
 
                 // Then do the same for out-of-use Twitter accounts
@@ -206,9 +216,9 @@ namespace SwitchScreenshot.Main
                 if (!Reader.Read()) {
                     Reader.Close();
                     Command.CommandText = "DELETE FROM TwitterUsers WHERE Id=@T_ID;";
-                    Command.ExecuteNonQuery();
+                    await Command.ExecuteNonQueryAsync();
                     // If nobody is interested in this twitter account, unfollow
-                    Program.TwitterBotInstance.UnfollowUser(twitterUserId, discordUsername);
+                    await Program.TwitterBotInstance.UnfollowUser(twitterUserId, discordUsername);
                 }
             } catch (MySqlException e) {
                 Utils.MainLog(
@@ -216,7 +226,7 @@ namespace SwitchScreenshot.Main
                     "Error", "UnsubscribeUser");
             } finally {
                 if (Reader != null) Reader.Close();
-                if (Connection != null) Connection.Close();
+                if (Connection != null) await Connection.CloseAsync();
             }
         }
 
@@ -224,7 +234,7 @@ namespace SwitchScreenshot.Main
         public async Task PassScreenshot(long twitterId, string screenshotUrl)
         {
             // Find out what discord user(s) to send it to
-            var UserIds = GetSubscribedUsers(twitterId);
+            var UserIds = await GetSubscribedUsers(twitterId);
             foreach (ulong UserId in UserIds)
             {
                 await Program.DiscordBotInstance.SendScreenshot(UserId, screenshotUrl);

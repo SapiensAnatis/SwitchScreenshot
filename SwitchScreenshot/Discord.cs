@@ -125,7 +125,7 @@ namespace SwitchScreenshot.Discord
             );
 
             await ReplyAsync($"You're now subscribed to Nintendo Switch screenshots posted by @{username} -- you will receive these in a DM from me as and when they are posted to Twitter.");
-            _SQLService.SubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
+            await _SQLService.SubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
         }
 
         // TODO: allow a user to view their registrations
@@ -141,19 +141,20 @@ namespace SwitchScreenshot.Discord
 
             // Check if they're actually subscribed first
             IUser Author = Context.Message.Author;
-            if (!_SQLService.GetSubscribedUsers(username).Contains(Author.Id)) {
+            var SubbedUsers = await _SQLService.GetSubscribedUsers(username);
+            if (!SubbedUsers.Contains(Author.Id)) {
                 await ReplyAsync("You aren't subscribed to that user. If you are, and they changed their username, enter the new one.");
                 return;
             }
 
-            _SQLService.UnsubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
+            await _SQLService.UnsubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
             await ReplyAsync($"Successfully unsubscribed from @{username}. You will no longer receive their screenshots.");
         }
 
         [Command("list"), Summary("List a user's subscriptions - with updated usernames if changed.")]
         public async Task List()
         {
-            var SubList = _SQLService.GetSubscriptions(Context.User.Id);
+            var SubList = await _SQLService.GetSubscriptions(Context.User.Id);
             var ReplyString = "You are subscribed to the following users:\n";
             foreach (string TwitterUsername in SubList)
             {
