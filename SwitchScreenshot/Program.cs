@@ -24,7 +24,7 @@ namespace SwitchScreenshot.Main
             DiscordThread.Start();
 
             TwitterBotInstance = new SwitchScreenshot.Twitter.TwitterBot();
-            Thread TwitterThread = new Thread(TwitterBotInstance.Init);
+            var TwitterThread = new Thread(TwitterBotInstance.Init);
             TwitterThread.Start();
         }
     }
