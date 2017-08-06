@@ -12,7 +12,7 @@ namespace SwitchScreenshot.Discord
     public class DiscordBot
     {
         private CommandService _Commands;
-        private DiscordSocketClient _Client;
+        private static DiscordSocketClient _Client;
         private ServiceCollection _ServiceCollection;
         private IServiceProvider _Services;
 
