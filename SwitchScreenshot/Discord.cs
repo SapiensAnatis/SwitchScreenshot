@@ -120,12 +120,10 @@ namespace SwitchScreenshot.Discord
             *
             */
             
-            if (username.Length > 15) {
-                await ReplyAsync("That's an invalid Twitter username; it's too long.");
-                return;
-            } else if (!username.All(c => char.IsLetterOrDigit(c) || c == '_')) { // Asserts that all characters in string are either alphanumeric or underscores.
-                await ReplyAsync("That's an invalid Twitter username; it contains disallowed characters.");
-                return;
+            var IsValidNameTuple = username.IsValidTwitterUsername();
+            if (!IsValidNameTuple.success)
+            {
+                await ReplyAsync(IsValidNameTuple.reason);
             }
             
             IUser Author = Context.Message.Author; // Shorthand
@@ -140,6 +138,11 @@ namespace SwitchScreenshot.Discord
         }
 
         // TODO: allow a user to view their registrations, allow them to unregister
+        [Command("unregister"), Summary("Disassociate a Twitter account to no longer receive messages from it.")]
+        public async Task Unregister([Remainder, Summary("The @username to unregister (must already be registered to it)")] string username)
+        {
+
+        }
     }
 
     public static partial class Utils
@@ -152,6 +155,18 @@ namespace SwitchScreenshot.Discord
                 .ToString("HH:mm:ss");
             Console.WriteLine($"[Discord | {TimeString}] ({message.Severity}) {message.Source}: {message.Message}");
             return Task.CompletedTask;
+        }
+
+        // Method to validate twitter usernames - returns 'success' bool and reason why invalid (if applicable)
+        public static (bool success, string reason) IsValidTwitterUsername (this string username)
+        {
+            if (username.Length > 15) {
+                return (false, "That's an invalid Twitter username; it's too long.");
+            } else if (!username.All(c => char.IsLetterOrDigit(c) || c == '_')) { // Asserts that all characters in string are either alphanumeric or underscores.
+                return (false, "That's an invalid Twitter username; it contains disallowed characters.");
+            }
+
+            return (true, "");
         }
     }
 }
