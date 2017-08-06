@@ -135,11 +135,7 @@ namespace SwitchScreenshot.Discord
             );
 
             await ReplyAsync($"I'll follow {username}");
-            _SQLService.SubscribeUser(Author.Id, username);
-            SwitchScreenshot.Twitter.TwitterBot.SubscribeToUser(
-                username,
-                $"{Context.User.Username}#{Context.User.Discriminator}"
-            );
+            _SQLService.SubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
         }
     }
 

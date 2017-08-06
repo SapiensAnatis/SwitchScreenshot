@@ -61,6 +61,7 @@ namespace SwitchScreenshot.Main
     public class Data 
     {
         public MySqlConnection Connection { get; set; }
+
         public Data()
         {
             this.Connection = new MySqlConnection(Credentials);
@@ -100,7 +101,7 @@ namespace SwitchScreenshot.Main
             // Can select additional data from DiscordUsers with this ID if we want, but not for now.
         }
 
-        public void SubscribeUser(ulong DiscordUserId, string TwitterUsername)
+        public void SubscribeUser(ulong DiscordUserId, string TwitterUsername, string DiscordUsername)
         {
             // TODO: query Twitter side for twitter ID from @whatever
             // Until then placeholders for my theoretical SQL
@@ -122,6 +123,8 @@ namespace SwitchScreenshot.Main
                 Command.Parameters.AddWithValue("@DiscordId", DiscordUserId);
                 Command.Parameters.AddWithValue("@TwitterId", TwitterUserId);
                 Command.ExecuteNonQuery();
+
+                Program.TwitterBotInstance.FollowUser(TwitterUsername, DiscordUsername);
             } catch (MySqlException e) {
                 Utils.MainLog(
                     $"MySqlException occured while updating DB records for recently registered user: {e.ToString()}",
