@@ -124,6 +124,7 @@ namespace SwitchScreenshot.Discord
             if (!IsValidNameTuple.success)
             {
                 await ReplyAsync(IsValidNameTuple.reason);
+                return;
             }
             
             IUser Author = Context.Message.Author; // Shorthand
