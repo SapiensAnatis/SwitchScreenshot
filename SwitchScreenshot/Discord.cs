@@ -110,15 +110,7 @@ namespace SwitchScreenshot.Discord
         [Command("register"), Summary("Register a Twitter account to the Discord account in use to enable screenshot mirroring.")]
         public async Task Register([Remainder, Summary("The @username to register as the Twitter account")] string username)
         {
-            /* Input validation
-            * Twitter usernames cannot:
-            *
-            * - Contain the words Twitter or Admin unless official accounts (I'll let this one slide, because those usernames could be 
-            *   posting screenshots for whatever reason)
-            * - Be longer than 15 characters
-            * - Contain non-alphanumeric characters that aren't underscores
-            *
-            */
+            
             
             var IsValidNameTuple = username.IsValidTwitterUsername();
             if (!IsValidNameTuple.success)
@@ -142,7 +134,12 @@ namespace SwitchScreenshot.Discord
         [Command("unregister"), Summary("Disassociate a Twitter account to no longer receive messages from it.")]
         public async Task Unregister([Remainder, Summary("The @username to unregister (must already be registered to it)")] string username)
         {
-
+            var IsValidNameTuple = username.IsValidTwitterUsername();
+            if (!IsValidNameTuple.success)
+            {
+                await ReplyAsync(IsValidNameTuple.reason);
+                return;
+            }
         }
     }
 
@@ -161,6 +158,16 @@ namespace SwitchScreenshot.Discord
         // Method to validate twitter usernames - returns 'success' bool and reason why invalid (if applicable)
         public static (bool success, string reason) IsValidTwitterUsername (this string username)
         {
+            /* Input validation
+            * Twitter usernames cannot:
+            *
+            * - Contain the words Twitter or Admin unless official accounts (I'll let this one slide, because those usernames could be 
+            *   posting screenshots for whatever reason)
+            * - Be longer than 15 characters
+            * - Contain non-alphanumeric characters that aren't underscores
+            *
+            */
+
             if (username.Length > 15) {
                 return (false, "That's an invalid Twitter username; it's too long.");
             } else if (!username.All(c => char.IsLetterOrDigit(c) || c == '_')) { // Asserts that all characters in string are either alphanumeric or underscores.
