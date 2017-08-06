@@ -103,8 +103,8 @@ namespace SwitchScreenshot.Main
 
         public void SubscribeUser(ulong DiscordUserId, string TwitterUsername, string DiscordUsername)
         {
-            var TwitterUsedId = Program.TwitterBotInstance.GetUserId(TwitterUsername);
-            
+            var TwitterUserId = Program.TwitterBotInstance.GetUserId(TwitterUsername);
+
             try {
                 MySqlCommand Command = new MySqlCommand("INSERT IGNORE INTO DiscordUsers(Id) VALUES(@Id)");
                 Command.Connection = Connection;
