@@ -89,9 +89,10 @@ namespace SwitchScreenshot.Discord
             
         }
 
-        public async Task SendScreenshot(ulong recipientUserId)
+        public async Task SendScreenshot(ulong recipientUserId, string url)
         {
-            
+            var User = _Client.GetUser(recipientUserId);
+            await User.SendMessageAsync(url);
         }
 
     }

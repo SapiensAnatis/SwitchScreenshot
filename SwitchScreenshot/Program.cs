@@ -137,7 +137,7 @@ namespace SwitchScreenshot.Main
             // Find out what discord user(s) to send it to
             var UserIds = GetSubscribedUsers(twitterId);
             foreach (ulong UserId in UserIds)
-                await Program.DiscordBotInstance.SendScreenshot(UserId);
+                await Program.DiscordBotInstance.SendScreenshot(UserId, screenshotUrl);
         }
     }
 
