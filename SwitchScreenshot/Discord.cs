@@ -110,12 +110,10 @@ namespace SwitchScreenshot.Discord
         [Command("register"), Summary("Register a Twitter account to the Discord account in use to enable screenshot mirroring.")]
         public async Task Register([Remainder, Summary("The @username to register as the Twitter account")] string username)
         {
-            
-            
-            var IsValidNameTuple = username.IsValidTwitterUsername();
-            if (!IsValidNameTuple.success)
+            (bool IsValid, string Reason) = username.IsValidTwitterUsername();
+            if (!IsValid)
             {
-                await ReplyAsync(IsValidNameTuple.reason);
+                await ReplyAsync(Reason);
                 return;
             }
             
@@ -134,10 +132,10 @@ namespace SwitchScreenshot.Discord
         [Command("unregister"), Summary("Disassociate a Twitter account to no longer receive messages from it.")]
         public async Task Unregister([Remainder, Summary("The @username to unregister (must already be registered to it)")] string username)
         {
-            var IsValidNameTuple = username.IsValidTwitterUsername();
-            if (!IsValidNameTuple.success)
+            (bool IsValid, string Reason) = username.IsValidTwitterUsername();
+            if (!IsValid)
             {
-                await ReplyAsync(IsValidNameTuple.reason);
+                await ReplyAsync(Reason);
                 return;
             }
         }
@@ -156,7 +154,7 @@ namespace SwitchScreenshot.Discord
         }
 
         // Method to validate twitter usernames - returns 'success' bool and reason why invalid (if applicable)
-        public static (bool success, string reason) IsValidTwitterUsername (this string username)
+        public static (bool, string) IsValidTwitterUsername (this string username)
         {
             /* Input validation
             * Twitter usernames cannot:
