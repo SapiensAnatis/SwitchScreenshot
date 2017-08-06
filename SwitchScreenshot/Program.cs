@@ -38,7 +38,7 @@ namespace SwitchScreenshot.Main
             Connection.Open();
         }
 
-        public static string Credentials = @"server=localhost;userid=SwitchScreenshotsBot;databse=SwitchScreenshotsDB;password=GOOD password;SslMode=None";
+        public static string Credentials = @"server=localhost;userid=SwitchScreenshotsBot;database=SwitchScreenshotsDB;password=GOOD password;SslMode=None";
 
         public List<ulong> GetSubscribedUsers(long twitterId)
         {
