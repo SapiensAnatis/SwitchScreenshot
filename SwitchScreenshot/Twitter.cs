@@ -65,7 +65,7 @@ namespace SwitchScreenshot.Twitter
             await _DataInstance.PassScreenshot(args.Tweet.CreatedBy.Id, Tweet.Media.FirstOrDefault().MediaURLHttps);
         }
 
-        public static void SubscribeToUser(string username, string discordName)
+        public void FollowUser(string username, string discordName)
         {
             // Follow a user when they're subscribed to.
             var RelevantUser = User.GetUserFromScreenName(username);
@@ -77,6 +77,8 @@ namespace SwitchScreenshot.Twitter
             // TODO: Reply to this message with <something> to stop this stalker from doing it
             Tweet.PublishTweet($"@{username}: Per their request, I will now be sending all screenshots you tweet from your Switch to {discordName}.");
         }
+
+        public 
 
         
     }
