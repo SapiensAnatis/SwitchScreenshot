@@ -41,14 +41,17 @@ namespace SwitchScreenshot.Twitter
             var AuthenticatedUser = User.GetAuthenticatedUser();
             Utils.TwitterLog($"Logged into Twitter as {AuthenticatedUser.Name}", "Info", "Init");;
             _Stream = Tweetinvi.Stream.CreateUserStream();
-            _Stream.StartStream();
-            // Stream events. Pretty much the bulk of the code
+            
+            // Stream events
             _Stream.StreamStopped += (sender, args) => {
                 Utils.TwitterLog($"Stream halted: {args.DisconnectMessage} ({args.Exception}",
                 "Error", "Source unknown");
             };
 
             _Stream.TweetCreatedByFriend += OnFollowerTweet;
+            
+            _Stream.StartStream();
+            
             
         }
 
