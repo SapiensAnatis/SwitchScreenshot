@@ -17,6 +17,7 @@ namespace SwitchScreenshot.Discord
         private IServiceProvider _Services;
 
         // Funcs are split: do all non-async work in this func which gets called in the main thread, then jump into the discord bot's own thread for async work
+        // Otherwise, on attempting to call PostScreenshot() from the main thread, the client is null because...threading reasons
         public void Init() {
             _Client = new DiscordSocketClient();
             _Commands = new CommandService();
@@ -72,12 +73,13 @@ namespace SwitchScreenshot.Discord
                     )
                 );
 
+                // Personalize the error messages a bit
                 switch (Result.Error) {
                     case CommandError.BadArgCount:
                         await Context.Channel.SendMessageAsync("You provided the wrong number of arguments for that command.");
                         break;
                     case CommandError.UnknownCommand:
-                        await Context.Channel.SendMessageAsync("I don't know that command. Valid commands are: register, unregister");
+                        await Context.Channel.SendMessageAsync("I don't know that command. Valid commands are: register, unregister, check");
                         break;
                     default:
                         await Context.Channel.SendMessageAsync(Result.ErrorReason);
@@ -133,15 +135,19 @@ namespace SwitchScreenshot.Discord
                 $" Discord user {Author.Username}#{Author.Discriminator} (ID: {Author.Id}) under username @{username}")
             );
 
-            await ReplyAsync($"I'll follow {username}");
+            await ReplyAsync($"You're now subscribed to Nintendo Switch screenshots posted by @{username} -- you will receive these in a DM from me as and when they are posted to Twitter.");
             _SQLService.SubscribeUser(Author.Id, username, $"{Context.User.Username}#{Context.User.Discriminator}");
         }
+
+        // TODO: allow a user to view their registrations, allow them to unregister
     }
 
     public static partial class Utils
     {
         public static Task DiscordLog(LogMessage message)
         {
+            // Helper function to format logs nicely. Specific to Discord because LogMessage and so the severity enum and stuff are all exclusive.
+            // (don't want to 'using Discord;' for all other files just because of these nice logging tools. A more dedicated package may be appropriate)
             string TimeString = TimeZoneInfo.ConvertTime(DateTime.Now, TimeZoneInfo.Local)
                 .ToString("HH:mm:ss");
             Console.WriteLine($"[Discord | {TimeString}] ({message.Severity}) {message.Source}: {message.Message}");

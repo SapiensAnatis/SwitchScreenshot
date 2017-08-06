@@ -32,6 +32,24 @@ namespace SwitchScreenshot.Main
     }
     public class Data 
     {
+        /* 
+         * SQL structure explanation:
+         * 
+         * We have three tables in our DB: Discord users, TwitterUsers, and DiscordTwitterUsers. 
+         * The first two are traditional tables with primary keys. They each contain one column for the ids of respective users.
+         * The last one is an intermediary table which stores the relationships between them, as they share a many to many relationship.
+         * That is, I could subscribe to five Twitter accounts if I was a pro stalker, and five Discord accounts could be subscribed to one Twitter
+         * account of a pro Splatoon 2 player.
+         * 
+         * Because of this many to many relationship, naturally a table without any primary keys is required /somewhere/.
+         * However, if we had a single table with no primary key, and if we later decided we wanted to store more info about
+         * either type of user later on, we'd end up wasting a large amount of storage space with our non-unique relationship entries, 
+         * as in a single table setup we'd expect that for each entry, which describes a relationship, there'd also be all the data we want.
+         *
+         * While we currently don't want to store additional data on the users, it's better to do some additional setup now rather than be faced with
+         * a bit of a rewrite later. 
+         */
+
         public MySqlConnection Connection { get; set; }
 
         public Data()
@@ -41,8 +59,11 @@ namespace SwitchScreenshot.Main
             Connection.Open();
         }
 
+        // Again this assumes a certain setup...sorry. Good password though
         public static string Credentials = @"server=localhost;userid=SwitchScreenshotsBot;database=SwitchScreenshotsDB;password=GOOD password;SslMode=None";
 
+        // Method to return a list of Discord user IDs that are subscribed to a given twitter user. Used in determining who to PM screenshots to when
+        // they are detected.
         public List<ulong> GetSubscribedUsers(long twitterId)
         {
             MySqlDataReader Reader = null;
@@ -67,6 +88,7 @@ namespace SwitchScreenshot.Main
                     "GetSubscribedUsers"
                 );
             } finally {
+                // Clean up
                 if (Reader != null) Reader.Close();
                 if (Connection != null) Connection.Close();
             }
@@ -81,6 +103,8 @@ namespace SwitchScreenshot.Main
             var TwitterUserId = Program.TwitterBotInstance.GetUserId(twitterUsername);
 
             try {
+                // INSERT IGNORE: we are dealing with primary keys in these databases, so if a user subscribes to multiple accounts we
+                // run into an exception, as they're supposed to be unique. IGNORE ignores that because we don't care.
                 MySqlCommand Command = new MySqlCommand("INSERT IGNORE INTO DiscordUsers(Id) VALUES(@Id)");
                 Command.Connection = Connection;
                 Command.Prepare();
@@ -98,6 +122,7 @@ namespace SwitchScreenshot.Main
                 Command.Parameters.AddWithValue("@TwitterId", TwitterUserId);
                 Command.ExecuteNonQuery();
 
+                // Follow the user so that we can narrow down our events (not looking at the whole of Twitter)
                 Program.TwitterBotInstance.FollowUser(twitterUsername, discordUsername);
             } catch (MySqlException e) {
                 Utils.MainLog(
