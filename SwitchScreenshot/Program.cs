@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
@@ -46,6 +47,8 @@ namespace SwitchScreenshot.Main
             List<ulong> Results = new List<ulong>();
 
             try {
+                if (Connection.State == ConnectionState.Closed ) Connection.Open();
+
                 MySqlCommand Command = new MySqlCommand("SELECT DiscordId FROM DiscordTwitterUsers WHERE TwitterId=@twitterId", Connection);
                 Command.Prepare();
 
