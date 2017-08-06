@@ -20,7 +20,7 @@ namespace SwitchScreenshot.Main
 
             // Start the Discord bot on a new thread, after initializing the non-async stuff here
             DiscordBotInstance.Init();
-            DiscordThread = new Thread(DiscordBotInstance.Start().GetAwaiter().GetResult);
+            var DiscordThread = new Thread(DiscordBotInstance.Start().GetAwaiter().GetResult);
             DiscordThread.Start();
 
             TwitterBotInstance = new SwitchScreenshot.Twitter.TwitterBot();
