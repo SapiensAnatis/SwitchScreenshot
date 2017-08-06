@@ -12,15 +12,17 @@ namespace SwitchScreenshot.Main
     {
         public static SwitchScreenshot.Discord.DiscordBot DiscordBotInstance;
         public static SwitchScreenshot.Twitter.TwitterBot TwitterBotInstance;
+        // Unless I call functions involving the client on the same thread, Client is null
+        public static Thread DiscordThread;
 
         static void Main(string[] args)
         {
             // Now that I do no initial setup...no point opening a connection just to close it
-            
-            
             DiscordBotInstance = new SwitchScreenshot.Discord.DiscordBot();
-            // Start the Discord bot on a new thread
-            Thread DiscordThread = new Thread(DiscordBotInstance.Init);
+
+            // Start the Discord bot on a new thread, after initializing the non-async stuff here
+            DiscordBotInstance.Init();
+            DiscordThread = new Thread(DiscordBotInstance.Start().GetAwaiter().GetResult);
             DiscordThread.Start();
 
             TwitterBotInstance = new SwitchScreenshot.Twitter.TwitterBot();
@@ -112,7 +114,9 @@ namespace SwitchScreenshot.Main
             // Find out what discord user(s) to send it to
             var UserIds = GetSubscribedUsers(twitterId);
             foreach (ulong UserId in UserIds)
+            {
                 await Program.DiscordBotInstance.SendScreenshot(UserId, screenshotUrl);
+            }
         }
     }
 

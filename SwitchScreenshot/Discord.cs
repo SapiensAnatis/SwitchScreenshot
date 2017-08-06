@@ -12,31 +12,30 @@ namespace SwitchScreenshot.Discord
     public class DiscordBot
     {
         private CommandService _Commands;
-        private static DiscordSocketClient _Client;
+        private DiscordSocketClient _Client;
         private ServiceCollection _ServiceCollection;
         private IServiceProvider _Services;
 
-        public void Init() => new DiscordBot().Start().GetAwaiter().GetResult();
-
-        public async Task Start()
-        {
+        // Funcs are split: do all non-async work in this func which gets called in the main thread, then jump into the discord bot's own thread for async work
+        public void Init() {
             _Client = new DiscordSocketClient();
             _Commands = new CommandService();
 
-            string Token = System.IO.File.ReadAllLines(
-                "/home/jay/Programming/SwitchScreenshot/SwitchScreenshot/DiscordToken.txt"
-            )[0]; // First line of file to avoid trailing newlines. Also hardcoded path cause this isn't a public bot
-
+            
             _ServiceCollection = new ServiceCollection();
             // Registering DI services. Add this to allow writing to the database
             _ServiceCollection.AddScoped<SwitchScreenshot.Main.Data>();
 
-
             _Services = _ServiceCollection.BuildServiceProvider();
-
-            await InstallCommands();
-
             _Client.Log += Utils.DiscordLog;
+        }
+
+        public async Task Start()
+        {
+            string Token = System.IO.File.ReadAllLines(
+                "/home/jay/Programming/SwitchScreenshot/SwitchScreenshot/DiscordToken.txt"
+            )[0]; // First line of file to avoid trailing newlines. Also hardcoded path cause this isn't a public bot
+            await InstallCommands();
 
             await _Client.LoginAsync(TokenType.Bot, Token);
             await _Client.StartAsync();
